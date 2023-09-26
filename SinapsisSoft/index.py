@@ -1,5 +1,6 @@
 from tkinter import ttk
 from tkinter import *
+import tkinter as tk
 import pymysql.cursors
 from tkinter import messagebox
 
@@ -34,6 +35,7 @@ class Product:
         self.mensua.grid(row = 4, column = 1)
 
         ttk.Button(frame, text = 'Guardar Cliente',command=self.add_clients).grid(row = 5, columnspan = 2, sticky = W + E)
+        ttk.Button(text = 'Generar Recibo de Pago').grid(row = 5, column = 2, sticky = W + E)
 
         self.tree = ttk.Treeview(height = 10, columns = ("","","",""))
         self.tree.grid(row = 4, column = 0, columnspan = 2)
@@ -42,6 +44,9 @@ class Product:
         self.tree.heading('#2', text = 'Saldo Anterior', anchor = CENTER)
         self.tree.heading('#3', text = 'Saldo Actual', anchor = CENTER)
         self.tree.heading('#4', text = 'Mensualidades', anchor = CENTER)
+
+        ttk.Button(text = 'Borrar', command=self.delete_clients).grid(row = 5, column = 0, sticky = W + E)
+        ttk.Button(text = 'Editar').grid(row = 5, column = 1, sticky = W + E)
 
         self.get_clients()
 
@@ -102,6 +107,20 @@ class Product:
         self.nomCliente.delete(0,END)
         self.saldo.delete(0,END)
         self.mensua.delete(0,END)
+
+    def delete_clients(self):
+        try:
+            self.tree.item(self.tree.selection())['text']
+        except IndexError as e:
+            #print('Seleccione un registro')
+            messagebox.showinfo("Fracaso", "Seleccione un registro")
+            return
+        numContrato = self.tree.item(self.tree.selection())['text']
+        query = 'DELETE FROM cliente WHERE num_contrato = %s'
+        self.run_query_add(query,(numContrato,))
+        #print('Registro Eliminado')
+        messagebox.showinfo("Éxito", "Registro Eliminado")
+        self.get_clients()
 
 if __name__ == '__main__':
     window = Tk()
