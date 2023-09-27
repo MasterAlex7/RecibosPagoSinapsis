@@ -77,7 +77,7 @@ class Product:
         self.numContratoRecibo = Entry(frame)
         self.numContratoRecibo.grid(row=2, column=1)
 
-        ttk.Button(frame, text='Buscar').grid(row=2,column=3, columnspan=2, sticky=W + E)
+        ttk.Button(frame, text='Buscar',command=self.search_client).grid(row=2,column=3, columnspan=2, sticky=W + E)
 
         Label(frame, text='Cantidad Recibida: ').grid(row=3, column=0)
         self.cantidadRecibida = Entry(frame)
@@ -99,7 +99,7 @@ class Product:
         self.nombreAcreedor = Entry(frame)
         self.nombreAcreedor.grid(row=7, column=1)
 
-        ttk.Button(frame, text='Crear Recibo').grid(row=8, columnspan=2, sticky=W + E)
+        ttk.Button(frame, text='Crear Recibo',command=self.create_recibo).grid(row=8, columnspan=2, sticky=W + E)
         #ttk.Button(frame, text='Generar Recibo de Pago').grid(row=5, column=2, sticky=W + E)
 
         self.tree2 = ttk.Treeview(tab, height=7, columns=("",))
@@ -202,13 +202,47 @@ class Product:
             self.numContratoRecibo.delete(0,END)
             self.tree2.item(self.tree2.selection())['values'][0]
             numContrato = self.tree2.item(self.tree2.selection())['values'][0]
-            nomCliente = self.tree2.item(self.tree2.selection())['text']
+            self.nomCliente = self.tree2.item(self.tree2.selection())['text']
             self.numContratoRecibo.insert(0, numContrato)
-            self.etiquetaNombre.config(text=f'{nomCliente}')
+            self.etiquetaNombre.config(text=f'{self.nomCliente}')
         except IndexError as e:
             #print('Seleccione un registro')
             messagebox.showinfo("Fracaso", "Seleccione un registro")
             return
+        
+    def search_client(self):
+        try:
+            if self.numContratoRecibo.get() != 0:
+                query = 'SELECT nombre_cliente FROM cliente WHERE num_contrato = %s'
+                parameters = (self.numContratoRecibo.get())
+                response = self.run_query(query,parameters)
+                print(response)
+                self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
+        except pymysql.Error as e:
+            messagebox.showerror("Error", "Error al buscar los datos")
+
+    def validationRecibo(self):
+        return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.abono.get()) != 0 and len(self.nombreAcreedor.get()) != 0
+
+    def create_recibo(self):
+        try:
+            if self.validationRecibo():
+                query = 'INSERT INTO pago (num_contrato, cantidad_recibida, mensualidad_recibida, abono, descuento, nombre_acreedor) values(%s,%s, %s, %s, %s, %s)'
+                if len(self.descuento.get()) == 0:
+                    self.descuento=0
+                else:
+                    self.descuento=self.descuento.get()
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),self.descuento,self.nombreAcreedor.get())
+                self.run_query_add(query,parameters)
+                #print('Datos guardados')
+                messagebox.showinfo("Éxito", "Datos guardados correctamente")
+            else:
+                #print('Error al guardar datos')
+                messagebox.showinfo("Fracaso", "Datos Erroneos")
+        except pymysql.Error as e:
+            #print("Error al guardar los datos: ", e)
+            messagebox.showerror("Error", "Error al guardar los datos")
+
 
 
 if __name__ == '__main__':
