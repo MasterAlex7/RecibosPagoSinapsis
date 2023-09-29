@@ -3,6 +3,7 @@ from tkinter import *
 import tkinter as tk
 import pymysql.cursors
 from tkinter import messagebox
+import datetime
 
 class Product:
     dbHost = 'localhost'
@@ -73,21 +74,21 @@ class Product:
         self.etiquetaNombre= Label(frame)
         self.etiquetaNombre.grid(row=1, column=1)
 
-        Label(frame, text='Numero de Contrato: ').grid(row=2, column=0)
+        Label(frame, text='*Numero de Contrato: ').grid(row=2, column=0)
         self.numContratoRecibo = Entry(frame)
         self.numContratoRecibo.grid(row=2, column=1)
 
         ttk.Button(frame, text='Buscar',command=self.search_client).grid(row=2,column=3, columnspan=2, sticky=W + E)
 
-        Label(frame, text='Cantidad Recibida: ').grid(row=3, column=0)
+        Label(frame, text='*Cantidad Recibida: ').grid(row=3, column=0)
         self.cantidadRecibida = Entry(frame)
         self.cantidadRecibida.grid(row=3, column=1)
 
-        Label(frame, text='Mensualidad Recibida: ').grid(row=4, column=0)
+        Label(frame, text='*Mensualidad Recibida: ').grid(row=4, column=0)
         self.mensualidadRecibida = Entry(frame)
         self.mensualidadRecibida.grid(row=4, column=1)
 
-        Label(frame, text='Abono: ').grid(row=5, column=0)
+        Label(frame, text='*Abono: ').grid(row=5, column=0)
         self.abono = Entry(frame)
         self.abono.grid(row=5, column=1)
 
@@ -95,11 +96,12 @@ class Product:
         self.descuento = Entry(frame)
         self.descuento.grid(row=6, column=1)
 
-        Label(frame, text='Recibio: ').grid(row=7, column=0)
+        Label(frame, text='*Recibio: ').grid(row=7, column=0)
         self.nombreAcreedor = Entry(frame)
         self.nombreAcreedor.grid(row=7, column=1)
 
-        ttk.Button(frame, text='Crear Recibo',command=self.create_recibo).grid(row=8, columnspan=2, sticky=W + E)
+        Label(frame,text='* Campos obligatorios', fg='red').grid(row=8, column=0)
+        ttk.Button(frame, text='Crear Recibo',command=self.create_recibo).grid(row=9, columnspan=2, sticky=W + E)
         #ttk.Button(frame, text='Generar Recibo de Pago').grid(row=5, column=2, sticky=W + E)
 
         self.tree2 = ttk.Treeview(tab, height=7, columns=("",))
@@ -112,6 +114,7 @@ class Product:
         self.get_clientsRecibo()
 
     def run_query(self,query,parameters = ()):
+        print("Entro a run query")
         MysqlCnx = pymysql.connect(host=self.dbHost,port=self.dbPort,
                                 user=self.dbUser,
                                 password=self.dbPassword,
@@ -212,12 +215,19 @@ class Product:
         
     def search_client(self):
         try:
-            if self.numContratoRecibo.get() != 0:
+            if len(self.numContratoRecibo.get()) != 0:
+                print(self.numContratoRecibo.get())
                 query = 'SELECT nombre_cliente FROM cliente WHERE num_contrato = %s'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
+                if len(response) == 0:
+                    messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
+                else:
+                    self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
                 print(response)
-                self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
+            else:
+                #print('Error al buscar datos')
+                messagebox.showinfo("Fracaso", "No se ingreso un numero de contrato")
         except pymysql.Error as e:
             messagebox.showerror("Error", "Error al buscar los datos")
 
@@ -227,20 +237,28 @@ class Product:
     def create_recibo(self):
         try:
             if self.validationRecibo():
-                query = 'INSERT INTO pago (num_contrato, cantidad_recibida, mensualidad_recibida, abono, descuento, nombre_acreedor) values(%s,%s, %s, %s, %s, %s)'
-                if len(self.descuento.get()) == 0:
-                    self.descuento=0
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento, nombre_acreedor,fecha) values(%s,%s, %s, %s, %s, %s,%s)'
+                descuentoAux = self.descuento.get()
+                if len(descuentoAux) == 0:
+                    descuentoAux="0"
                 else:
-                    self.descuento=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),self.descuento,self.nombreAcreedor.get())
+                    descuentoAux=self.descuento.get()
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,self.nombreAcreedor.get(),datetime.datetime.now())
                 self.run_query_add(query,parameters)
                 #print('Datos guardados')
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
+                self.numContratoRecibo.delete(0,END)
+                self.cantidadRecibida.delete(0,END)
+                self.mensualidadRecibida.delete(0,END)
+                self.abono.delete(0,END)
+                self.descuento.delete(0,END)
+                self.nombreAcreedor.delete(0,END)
+                self.etiquetaNombre.config(text=f'')
             else:
                 #print('Error al guardar datos')
-                messagebox.showinfo("Fracaso", "Datos Erroneos")
+                messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
         except pymysql.Error as e:
-            #print("Error al guardar los datos: ", e)
+            print("Error al guardar los datos: ", e)
             messagebox.showerror("Error", "Error al guardar los datos")
 
 
