@@ -4,6 +4,7 @@ import tkinter as tk
 import pymysql.cursors
 from tkinter import messagebox
 import datetime
+from pdfGenerator import receiveGenerate
 
 class Product:
     dbHost = 'localhost'
@@ -247,6 +248,7 @@ class Product:
                 self.run_query_add(query,parameters)
                 #print('Datos guardados')
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
+                receiveGenerate.crearPDF()
                 self.numContratoRecibo.delete(0,END)
                 self.cantidadRecibida.delete(0,END)
                 self.mensualidadRecibida.delete(0,END)
