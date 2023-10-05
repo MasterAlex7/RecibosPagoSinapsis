@@ -20,4 +20,7 @@ def crearPDF():
 
     config = pdfkit.configuration(wkhtmltopdf='C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
     output_pdf = 'RecibodePagoSInapsis'+my_zip+'.pdf'
-    pdfkit.from_string(outputText, output_pdf, configuration=config)
+    pdfkit.from_string(outputText, output_pdf, configuration=config, css='SinapsisSoft/pdfGenerator/styles.css')
+
+if __name__ == '__main__':
+    crearPDF()
