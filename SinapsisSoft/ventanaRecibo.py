@@ -209,6 +209,14 @@ class Product:
             self.nomCliente = self.tree2.item(self.tree2.selection())['text']
             self.numContratoRecibo.insert(0, numContrato)
             self.etiquetaNombre.config(text=f'{self.nomCliente}')
+            
+            query = 'SELECT * FROM cliente WHERE num_contrato = %s'
+            parameters = (self.numContratoRecibo.get())
+            response = self.run_query(query,parameters)
+            if len(response) == 0:
+                messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
+            else:
+                print(response)
         except IndexError as e:
             #print('Seleccione un registro')
             messagebox.showinfo("Fracaso", "Seleccione un registro")
