@@ -12,6 +12,7 @@ class Product:
     dbUser = 'root'
     dbPassword = 'Alexelpro27'
     dbName = 'sinapsis_clients'
+    arrayDatos = {}
 
     def __init__(self, window):
         self.wind = window
@@ -96,10 +97,6 @@ class Product:
         Label(frame, text='Descuento: ').grid(row=6, column=0)
         self.descuento = Entry(frame)
         self.descuento.grid(row=6, column=1)
-
-        Label(frame, text='*Recibio: ').grid(row=7, column=0)
-        self.nombreAcreedor = Entry(frame)
-        self.nombreAcreedor.grid(row=7, column=1)
 
         Label(frame,text='* Campos obligatorios', fg='red').grid(row=8, column=0)
         ttk.Button(frame, text='Crear Recibo',command=self.create_recibo).grid(row=9, columnspan=2, sticky=W + E)
@@ -205,10 +202,13 @@ class Product:
         try:
             self.numContratoRecibo.delete(0,END)
             self.tree2.item(self.tree2.selection())['values'][0]
-            numContrato = self.tree2.item(self.tree2.selection())['values'][0]
-            self.nomCliente = self.tree2.item(self.tree2.selection())['text']
-            self.numContratoRecibo.insert(0, numContrato)
-            self.etiquetaNombre.config(text=f'{self.nomCliente}')
+            numContratoRecibo = self.tree2.item(self.tree2.selection())['values'][0]
+            self.nomClienteRecibo = self.tree2.item(self.tree2.selection())['text']
+            self.numContratoRecibo.insert(0, numContratoRecibo)
+            self.etiquetaNombre.config(text=f'{self.nomClienteRecibo}')
+            self.mensualidadRecibida.delete(0,END)
+            self.abono.delete(0,END)
+            self.descuento.delete(0,END)
             
             query = 'SELECT * FROM cliente WHERE num_contrato = %s'
             parameters = (self.numContratoRecibo.get())
@@ -216,7 +216,16 @@ class Product:
             if len(response) == 0:
                 messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
             else:
-                print(response)
+                query = 'SELECT mensualidad_recibida, abono, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                parameters = (self.numContratoRecibo.get())
+                response = self.run_query(query,parameters)
+                if len(response) == 0:
+                    print("No hay pagos")
+                else:
+                    self.mensualidadRecibida.insert(0, response[0]['mensualidad_recibida']+1)
+                    self.abono.insert(0, response[0]['abono'])
+                    self.descuento.insert(0, response[0]['descuento'])
+                #print(response)
         except IndexError as e:
             #print('Seleccione un registro')
             messagebox.showinfo("Fracaso", "Seleccione un registro")
@@ -225,15 +234,26 @@ class Product:
     def search_client(self):
         try:
             if len(self.numContratoRecibo.get()) != 0:
+                self.mensualidadRecibida.delete(0,END)
+                self.abono.delete(0,END)
+                self.descuento.delete(0,END)
                 print(self.numContratoRecibo.get())
-                query = 'SELECT nombre_cliente FROM cliente WHERE num_contrato = %s'
+                query = 'SELECT * FROM cliente WHERE num_contrato = %s'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 if len(response) == 0:
                     messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
                 else:
                     self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
-                print(response)
+                    query = 'SELECT mensualidad_recibida, abono, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                    parameters = (self.numContratoRecibo.get())
+                    response = self.run_query(query,parameters)
+                    if len(response) == 0:
+                        print("No hay pagos")
+                    else:
+                        self.mensualidadRecibida.insert(0, response[0]['mensualidad_recibida']+1)
+                        self.abono.insert(0, response[0]['abono'])
+                        self.descuento.insert(0, response[0]['descuento'])
             else:
                 #print('Error al buscar datos')
                 messagebox.showinfo("Fracaso", "No se ingreso un numero de contrato")
@@ -241,18 +261,18 @@ class Product:
             messagebox.showerror("Error", "Error al buscar los datos")
 
     def validationRecibo(self):
-        return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.abono.get()) != 0 and len(self.nombreAcreedor.get()) != 0
+        return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.abono.get()) != 0
 
     def create_recibo(self):
         try:
             if self.validationRecibo():
-                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento, nombre_acreedor,fecha) values(%s,%s, %s, %s, %s, %s,%s)'
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha) values(%s,%s, %s, %s, %s,%s)'
                 descuentoAux = self.descuento.get()
                 if len(descuentoAux) == 0:
                     descuentoAux="0"
                 else:
                     descuentoAux=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,self.nombreAcreedor.get(),datetime.datetime.now())
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now())
                 self.run_query_add(query,parameters)
                 #print('Datos guardados')
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
@@ -262,7 +282,6 @@ class Product:
                 self.mensualidadRecibida.delete(0,END)
                 self.abono.delete(0,END)
                 self.descuento.delete(0,END)
-                self.nombreAcreedor.delete(0,END)
                 self.etiquetaNombre.config(text=f'')
             else:
                 #print('Error al guardar datos')
