@@ -165,7 +165,7 @@ class Product:
     def add_clients(self):
         try:
             if self.validation():
-                query = 'INSERT INTO cliente (num_contrato, nombre_cliente, saldo_anterior, saldo_actual, total_mensualidades) values(%s,%s, %s, %s, %s)'
+                query = 'INSERT INTO cliente (num_contrato, nombre_cliente, saldo_anterior, saldo_actual, total_mensualidades,mens_pagadas) values(%s,%s, %s, %s, %s,0)'
                 parameters = (self.numContrato.get(),self.nomCliente.get(),self.saldo.get(),self.saldo.get(),self.mensua.get())
                 self.run_query_add(query,parameters)
                 #print('Datos guardados')
@@ -274,9 +274,18 @@ class Product:
                     descuentoAux=self.descuento.get()
                 parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now())
                 self.run_query_add(query,parameters)
+
+                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
+                parameters = (self.abono.get(),1,self.numContratoRecibo.get())
+                self.run_query_add(query,parameters)
+
+                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+                parameters = (self.numContratoRecibo.get())
+                response = self.run_query(query,parameters)
+                print(response)
                 #print('Datos guardados')
+                receiveGenerate.crearPDF(response)
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
-                receiveGenerate.crearPDF()
                 self.numContratoRecibo.delete(0,END)
                 self.cantidadRecibida.delete(0,END)
                 self.mensualidadRecibida.delete(0,END)
