@@ -32,6 +32,11 @@ class Product:
         self.notebook.add(self.tab2, text='Crear Recibo')
         self.create_recibo_tab(self.tab2)
 
+        # Pestaña para buscar recibos
+        self.tab3 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab3, text='Buscar Recibo')
+        self.search_receive_tab(self.tab3)
+
     def create_register_tab(self, tab):
         frame = LabelFrame(tab, text='Registrar nuevo cliente')
         frame.grid(row=0, column=0, columnspan=3, pady=20)
@@ -99,7 +104,8 @@ class Product:
         self.descuento.grid(row=6, column=1)
 
         Label(frame,text='* Campos obligatorios', fg='red').grid(row=8, column=0)
-        ttk.Button(frame, text='Crear Recibo',command=self.create_recibo).grid(row=9, columnspan=2, sticky=W + E)
+        ttk.Button(frame, text='Crear Recibo Sinapsis',command=self.create_reciboSinapsis).grid(row=9, column=0, sticky=W + E)
+        ttk.Button(frame, text='Crear Recibo Speakers',command=self.create_reciboSpeakers).grid(row=9, column=1, sticky=W + E)
         #ttk.Button(frame, text='Generar Recibo de Pago').grid(row=5, column=2, sticky=W + E)
 
         self.tree2 = ttk.Treeview(tab, height=7, columns=("",))
@@ -110,6 +116,42 @@ class Product:
         ttk.Button(tab, text='Seleccionar', command=self.select_register).grid(row=6, column=0, sticky=W + E)
 
         self.get_clientsRecibo()
+
+    def search_receive_tab(self,tab):
+        frame = LabelFrame(tab, text='Buscar Recibo')
+        frame.grid(row=0, column=0, columnspan=3, pady=20)
+
+        Label(frame, text='Numero de Folio: ').grid(row=1, column=0)
+        self.etiquetaFolio= Entry(frame)
+        self.etiquetaFolio.grid(row=1, column=1)
+        ttk.Button(frame, text='Buscar',command=self.search_receive).grid(row=9, columnspan=2, sticky=W + E)
+
+        frameInfo = LabelFrame(tab, text='Informacion del Recibo')
+        frameInfo.grid(row=1, column=0, columnspan=3, pady=20)
+
+        Label(frameInfo, text='Nombre: ').grid(row=1, column=0)
+        self.etiquetaNombreRec= Label(frameInfo)
+        self.etiquetaNombreRec.grid(row=1, column=1)
+
+        Label(frameInfo, text='Numero de Contrato: ').grid(row=2, column=0)
+        self.etiquetaNumContratoRec= Label(frameInfo)
+        self.etiquetaNumContratoRec.grid(row=2, column=1)
+
+        Label(frameInfo, text='Fecha: ').grid(row=3, column=0)
+        self.etiquetaFechaRec= Label(frameInfo)
+        self.etiquetaFechaRec.grid(row=3, column=1)
+
+        Label(frameInfo, text='Mensualidad Pagada: ').grid(row=4, column=0)
+        self.etiquetaMensualidadRec= Label(frameInfo)
+        self.etiquetaMensualidadRec.grid(row=4, column=1)
+
+        Label(frameInfo, text='Abono: ').grid(row=5, column=0)
+        self.etiquetaAbonoRec= Label(frameInfo)
+        self.etiquetaAbonoRec.grid(row=5, column=1)
+
+        Label(frameInfo, text='Descuento: ').grid(row=6, column=0)
+        self.etiquetaDescuentoRec= Label(frameInfo)
+        self.etiquetaDescuentoRec.grid(row=6, column=1)
 
     def run_query(self,query,parameters = ()):
         print("Entro a run query")
@@ -174,7 +216,7 @@ class Product:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Datos Erroneos")
         except pymysql.Error as e:
-            #print("Error al guardar los datos: ", e)
+            print("Error al guardar los datos: ", e)
             messagebox.showerror("Error", "Error al guardar los datos")
         self.get_clients()
         self.get_clientsRecibo()
@@ -237,7 +279,7 @@ class Product:
                 self.mensualidadRecibida.delete(0,END)
                 self.abono.delete(0,END)
                 self.descuento.delete(0,END)
-                print(self.numContratoRecibo.get())
+                #print(self.numContratoRecibo.get())
                 query = 'SELECT * FROM cliente WHERE num_contrato = %s'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
@@ -263,7 +305,7 @@ class Product:
     def validationRecibo(self):
         return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.abono.get()) != 0
 
-    def create_recibo(self):
+    def create_reciboSinapsis(self):
         try:
             if self.validationRecibo():
                 query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha) values(%s,%s, %s, %s, %s,%s)'
@@ -284,7 +326,7 @@ class Product:
                 response = self.run_query(query,parameters)
                 print(response)
                 #print('Datos guardados')
-                receiveGenerate.crearPDF(response)
+                receiveGenerate.crearPDF(response,tipoRecibo="Sinapsis")
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
                 self.numContratoRecibo.delete(0,END)
                 self.cantidadRecibida.delete(0,END)
@@ -292,6 +334,7 @@ class Product:
                 self.abono.delete(0,END)
                 self.descuento.delete(0,END)
                 self.etiquetaNombre.config(text=f'')
+                self.get_clients()
             else:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
@@ -299,6 +342,64 @@ class Product:
             print("Error al guardar los datos: ", e)
             messagebox.showerror("Error", "Error al guardar los datos")
 
+    def create_reciboSpeakers(self):
+        try:
+            if self.validationRecibo():
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha) values(%s,%s, %s, %s, %s,%s)'
+                descuentoAux = self.descuento.get()
+                if len(descuentoAux) == 0:
+                    descuentoAux="0"
+                else:
+                    descuentoAux=self.descuento.get()
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now())
+                self.run_query_add(query,parameters)
+
+                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
+                parameters = (self.abono.get(),1,self.numContratoRecibo.get())
+                self.run_query_add(query,parameters)
+
+                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+                parameters = (self.numContratoRecibo.get())
+                response = self.run_query(query,parameters)
+                print(response)
+                #print('Datos guardados')
+                receiveGenerate.crearPDF(response,tipoRecibo="Speakers")
+                messagebox.showinfo("Éxito", "Datos guardados correctamente")
+                self.numContratoRecibo.delete(0,END)
+                self.cantidadRecibida.delete(0,END)
+                self.mensualidadRecibida.delete(0,END)
+                self.abono.delete(0,END)
+                self.descuento.delete(0,END)
+                self.etiquetaNombre.config(text=f'')
+                self.get_clients()
+            else:
+                #print('Error al guardar datos')
+                messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
+        except pymysql.Error as e:
+            print("Error al guardar los datos: ", e)
+            messagebox.showerror("Error", "Error al guardar los datos")
+
+    def search_receive(self):
+        try:
+            if len(self.etiquetaFolio.get()) != 0:
+                query = 'select cliente.nombre_cliente, pago.FK_ContratoCliente, pago.fecha, pago.mensualidad_recibida, pago.abono, pago.descuento from cliente inner join pago on cliente.num_contrato = pago.FK_ContratoCliente where pago.idpago = %s'
+                parameters = (self.etiquetaFolio.get())
+                response = self.run_query(query,parameters)
+                if len(response) == 0:
+                    messagebox.showinfo("Fracaso", "No se encontro ningun pago con ese numero de folio")
+                else:
+                    print(response)
+                    self.etiquetaNombreRec.config(text=f'{response[0]["nombre_cliente"]}')
+                    self.etiquetaNumContratoRec.config(text=f'{response[0]["FK_ContratoCliente"]}')
+                    self.etiquetaFechaRec.config(text=f'{response[0]["fecha"]}')
+                    self.etiquetaMensualidadRec.config(text=f'{response[0]["mensualidad_recibida"]}')
+                    self.etiquetaAbonoRec.config(text=f'{response[0]["abono"]}')
+                    self.etiquetaDescuentoRec.config(text=f'{response[0]["descuento"]}')
+            else:
+                #print('Error al buscar datos')
+                messagebox.showinfo("Fracaso", "No se ingreso un numero de contrato")
+        except pymysql.Error as e:
+            messagebox.showerror("Error", "Error al buscar los datos")
 
 
 if __name__ == '__main__':
