@@ -481,8 +481,8 @@ class Product:
                 print(response)
             else:
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
-        except:
-            #print("Error al guardar los datos: ", e)
+        except pymysql.Error as e:
+            print("Error al guardar los datos: ", e)
             messagebox.showerror("Error", "Error al generar reporte")
         
 
