@@ -5,6 +5,7 @@ import pymysql.cursors
 from tkinter import messagebox
 import datetime
 from pdfGenerator import receiveGenerate
+from reportGenerator import reportGenerate
 
 class Product:
     dbHost = 'localhost'
@@ -125,6 +126,21 @@ class Product:
         self.etiquetaFolio= Entry(frame)
         self.etiquetaFolio.grid(row=1, column=1)
         ttk.Button(frame, text='Buscar',command=self.search_receive).grid(row=9, columnspan=2, sticky=W + E)
+
+
+        #Generar Reporte Frame
+        frame2 = LabelFrame(tab, text='Generar Reporte')
+        frame2.grid(row=3, column=1, columnspan=1, pady=20)
+
+        #Etiqueta para generar reporte
+        Label(frame2, text='Mes: ').grid(row=1, column=1)
+        self.mesReporte= ttk.Combobox(frame2, values=self.mesesRecibos())
+        self.mesReporte.grid(row=1, column=2)
+
+        Label(frame2, text='Año: ').grid(row=2, column=1)
+        self.anioReporte= ttk.Combobox(frame2, values=self.aniosRecibos())
+        self.anioReporte.grid(row=2, column=2)
+        ttk.Button(frame2, text='Gererar Reporte',command=self.generarReporte).grid(row=9, columnspan=2, sticky=W + E)
 
         frameInfo = LabelFrame(tab, text='Informacion del Recibo')
         frameInfo.grid(row=1, column=0, columnspan=3, pady=20)
@@ -400,6 +416,75 @@ class Product:
                 messagebox.showinfo("Fracaso", "No se ingreso un numero de contrato")
         except pymysql.Error as e:
             messagebox.showerror("Error", "Error al buscar los datos")
+    
+    def mesesRecibos(self):
+        meses = []
+        query = 'SELECT DISTINCT MONTH(fecha) AS mes FROM pago ORDER BY mes'
+        response = self.run_query(query)
+        nombres_meses = {
+            1: 'Enero',
+            2: 'Febrero',
+            3: 'Marzo',
+            4: 'Abril',
+            5: 'Mayo',
+            6: 'Junio',
+            7: 'Julio',
+            8: 'Agosto',
+            9: 'Septiembre',
+            10: 'Octubre',
+            11: 'Noviembre',
+            12: 'Diciembre'
+        }
+
+        for row in response:
+            meses.append(nombres_meses[row['mes']])
+
+        return meses
+    
+    def aniosRecibos(self):
+        anios = []
+        query = 'SELECT DISTINCT YEAR(fecha) AS anio FROM pago ORDER BY anio'
+        response = self.run_query(query)
+
+        for row in response:
+            anios.append(row['anio'])
+
+        return anios
+    
+    def validationReporte(self):
+        return len(self.mesReporte.get()) != 0 and len(self.anioReporte.get()) != 0
+    
+    def generarReporte(self):
+        try:
+            if self.validationReporte():
+                nombres_meses_a_numeros = {
+                    'Enero': 1,
+                    'Febrero': 2,
+                    'Marzo': 3,
+                    'Abril': 4,
+                    'Mayo': 5,
+                    'Junio': 6,
+                    'Julio': 7,
+                    'Agosto': 8,
+                    'Septiembre': 9,
+                    'Octubre': 10,
+                    'Noviembre': 11,
+                    'Diciembre': 12
+                }
+                # Obtén el número del mes a partir del nombre
+                numero_mes = nombres_meses_a_numeros.get(self.mesReporte.get())
+                query='select pago.idpago as IdPago,cliente.nombre_cliente as NombreCliente, pago.FK_ContratoCliente as NumeroContrato, pago.fecha as FechaPago, pago.mensualidad_recibida as Mensualidad, pago.abono as Abono, pago.descuento as Descuento from cliente inner join pago on cliente.num_contrato = pago.FK_ContratoCliente where month(fecha) = %s and year(fecha) = %s'
+                params = (numero_mes,self.anioReporte.get())
+                response = self.run_query(query,params)
+                reportGenerate.crearExcel(response)
+                messagebox.showinfo("Éxito", "Reporte generado correctamente")
+                print(response)
+            else:
+                messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
+        except:
+            #print("Error al guardar los datos: ", e)
+            messagebox.showerror("Error", "Error al generar reporte")
+        
 
 
 if __name__ == '__main__':
