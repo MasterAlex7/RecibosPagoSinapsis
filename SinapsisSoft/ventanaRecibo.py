@@ -327,13 +327,13 @@ class Product:
     def create_reciboSinapsis(self):
         try:
             if self.validationRecibo():
-                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha,metodoPago) values(%s,%s, %s, %s, %s,%s,%s)'
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha,metodoPago,tipoRecibo) values(%s,%s, %s, %s, %s,%s,%s,%s)'
                 descuentoAux = self.descuento.get()
                 if len(descuentoAux) == 0:
                     descuentoAux="0"
                 else:
                     descuentoAux=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get())
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Sinapsis")
                 self.run_query_add(query,parameters)
 
                 query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
@@ -365,13 +365,13 @@ class Product:
     def create_reciboSpeakers(self):
         try:
             if self.validationRecibo():
-                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha,metodoPago) values(%s,%s, %s, %s, %s,%s,%s)'
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, mensualidad_recibida, abono, descuento,fecha,metodoPago,tipoRecibo) values(%s,%s, %s, %s, %s,%s,%s,%s)'
                 descuentoAux = self.descuento.get()
                 if len(descuentoAux) == 0:
                     descuentoAux="0"
                 else:
                     descuentoAux=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get())
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Speakers")
                 self.run_query_add(query,parameters)
 
                 query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
