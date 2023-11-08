@@ -38,6 +38,11 @@ class Product:
         self.notebook.add(self.tab3, text='Buscar Recibo')
         self.search_receive_tab(self.tab3)
 
+        # Pestaña para historial de pagos
+        self.tab4 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab4, text='Historial de Pagos')
+        self.history_pays_tab(self.tab4)
+
     def create_register_tab(self, tab):
         frame = LabelFrame(tab, text='Registrar nuevo cliente')
         frame.grid(row=0, column=0, columnspan=3, pady=20)
@@ -172,6 +177,22 @@ class Product:
         self.etiquetaDescuentoRec= Label(frameInfo)
         self.etiquetaDescuentoRec.grid(row=6, column=1)
 
+    def history_pays_tab(self,tab):
+        self.tree3 = ttk.Treeview(tab, height=10, columns=("","","","","","","",""))
+        self.tree3.grid(row=5, column=0, columnspan=2)
+        self.tree3.heading('#0', text='ID Pago', anchor=CENTER)
+        self.tree3.heading('#1', text='Numero Contrato', anchor=CENTER)
+        self.tree3.heading('#2', text='Cantidad Recibida', anchor=CENTER)
+        self.tree3.heading('#3', text='Mensualidad Recibida', anchor=CENTER)
+        self.tree3.heading('#4', text='Abono', anchor=CENTER)
+        self.tree3.heading('#5', text='Descuento', anchor=CENTER)
+        self.tree3.heading('#6', text='Metodo de Pago', anchor=CENTER)
+        self.tree3.heading('#7', text='Tipo Recibo', anchor=CENTER)
+
+        ttk.Button(tab, text='Editar',command=self.edit_receive_window).grid(row=6, column=0, sticky=W + E)
+
+        self.get_history_pays()
+
     def run_query(self,query,parameters = ()):
         print("Entro a run query")
         MysqlCnx = pymysql.connect(host=self.dbHost,port=self.dbPort,
@@ -195,6 +216,16 @@ class Product:
         cursor = MysqlCnx.cursor()
         cursor.execute(query,parameters)
         MysqlCnx.commit()
+
+    def get_history_pays(self):
+        records2 = self.tree3.get_children()
+        for element in records2:
+            self.tree3.delete(element)
+        
+        query= "select * from pago"
+        response = self.run_query(query)
+        for row in response:
+            self.tree3.insert('',0,text = row['idpago'], values = (row['FK_ContratoCliente'],row['cantidad_recibida'],row['mensualidad_recibida'],row['abono'],row['descuento'],row['metodoPago'],row['tipoRecibo']))
     
     def get_clients(self):
         records = self.tree.get_children()
@@ -355,6 +386,7 @@ class Product:
                 self.etiquetaNombre.config(text=f'')
                 self.metodoPago.delete(0,END)
                 self.get_clients()
+                self.get_history_pays()
             else:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
@@ -393,6 +425,7 @@ class Product:
                 self.etiquetaNombre.config(text=f'')
                 self.metodoPago.delete(0,END)
                 self.get_clients()
+                self.get_history_pays()
             else:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
@@ -532,6 +565,72 @@ class Product:
         messagebox.showinfo("Éxito", "Datos guardados correctamente")
         self.get_clients()
         self.edit_wind.destroy()
+
+    def edit_receive_window(self):
+        print(self.tree3.item(self.tree3.selection()))
+        idPago = self.tree3.item(self.tree3.selection())['text']
+        num_contrato = self.tree3.item(self.tree3.selection())['values'][0]
+        cantidad_recibida = self.tree3.item(self.tree3.selection())['values'][1]
+        mensualidad_recibida = self.tree3.item(self.tree3.selection())['values'][2]
+        abono = self.tree3.item(self.tree3.selection())['values'][3]
+        descuento = self.tree3.item(self.tree3.selection())['values'][4]
+        metodoPago = self.tree3.item(self.tree3.selection())['values'][5]
+        tipoRecibo = self.tree3.item(self.tree3.selection())['values'][6]
+        self.edit_wind_recibo = Toplevel()
+        self.edit_wind_recibo.title = 'Editar Recibo'
+
+        Label(self.edit_wind_recibo, text='ID Pago: ').grid(row=0, column=1)
+        Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=idPago), state='readonly').grid(row=0, column=2)
+
+        Label(self.edit_wind_recibo, text='Numero de Contrato: ').grid(row=1, column=1)
+        Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=num_contrato), state='readonly').grid(row=1, column=2)
+
+        Label(self.edit_wind_recibo, text='Cantidad Recibida: ').grid(row=2, column=1)
+        new_cantidad_recibida=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=cantidad_recibida))
+        new_cantidad_recibida.grid(row=2, column=2)
+
+        Label(self.edit_wind_recibo, text='Mensualidad Recibida: ').grid(row=3, column=1)
+        new_mensualidad_recibida=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=mensualidad_recibida))
+        new_mensualidad_recibida.grid(row=3, column=2)
+
+        Label(self.edit_wind_recibo, text='Abono: ').grid(row=4, column=1)
+        new_abono=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=abono))
+        new_abono.grid(row=4, column=2)
+
+        Label(self.edit_wind_recibo, text='Descuento: ').grid(row=5, column=1)
+        new_descuento=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=descuento))
+        new_descuento.grid(row=5, column=2)
+
+        Label(self.edit_wind_recibo, text='Metodo de Pago: ').grid(row=6, column=1)
+        new_metodoPago=ttk.Combobox(self.edit_wind_recibo, values=["Efectivo","TPV","Transferencia"])
+        new_metodoPago.grid(row=6, column=2)
+
+        Label(self.edit_wind_recibo, text='Tipo de Recibo: ').grid(row=7, column=1)
+        new_tipoRecibo=ttk.Combobox(self.edit_wind_recibo, values=["Sinapsis","Speakers"])
+        new_tipoRecibo.grid(row=7, column=2)
+
+        # Boton para guardar cambios
+        Button(self.edit_wind_recibo, text='Guardar Cambios',command= lambda: self.edit_receive(idPago,num_contrato,new_cantidad_recibida.get(),new_mensualidad_recibida.get(),new_abono.get(),new_descuento.get(),new_metodoPago.get(),new_tipoRecibo.get())).grid(row=8, column=2, sticky=W + E)
+        self.edit_wind_recibo.mainloop()
+
+    def edit_receive(self,idPago,num_contrato,new_cantidad_recibida,new_mensualidad_recibida,new_abono,new_descuento,new_metodoPago,new_tipoRecibo):
+        #print(numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens)
+        query = 'UPDATE pago SET cantidad_recibida = %s, mensualidad_recibida = %s, abono = %s, descuento = %s, metodoPago = %s, tipoRecibo = %s WHERE idpago = %s'
+        parameters = (new_cantidad_recibida,new_mensualidad_recibida,new_abono,new_descuento,new_metodoPago,new_tipoRecibo,idPago)
+        self.run_query_add(query,parameters)
+
+        query = 'UPDATE cliente SET saldo_actual = saldo_anterior - %s WHERE num_contrato = %s'
+        parameters = (new_abono,num_contrato)
+        self.run_query_add(query,parameters)
+
+        query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago,pago.tipoRecibo FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+        parameters = (num_contrato)
+        response = self.run_query(query,parameters)
+        print(response)
+        receiveGenerate.crearPDF(response,response[0]['tipoRecibo'])
+        messagebox.showinfo("Éxito", "Datos guardados correctamente")
+        self.get_history_pays()
+        self.edit_wind_recibo.destroy()
 
 
 if __name__ == '__main__':
