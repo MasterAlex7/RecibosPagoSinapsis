@@ -11,6 +11,7 @@ def crearPDF(response,tipoRecibo):
     saldo_ant = response[0]['saldo_anterior']
     descuento = response[0]['descuento']
     saldo_actual = response[0]['saldo_actual']
+    metodo_pago = response[0]['metodoPago']
     if tipoRecibo == 'Sinapsis':
         img = "https://raw.githubusercontent.com/MasterAlex7/assetsProyects/main/assetsSinapsis/LogoSinapsis.jpeg"
     else:
@@ -18,7 +19,7 @@ def crearPDF(response,tipoRecibo):
 
     context = {'imgRecibo': img,'client_name': client_name, 'num_contrato': num_contrato, 'today_date': today_date,
             'id_recibo': id_recibo, 'mensualidad_num': mensualidad_num, 'abono': abono, 
-            'saldo_ant': saldo_ant, 'descuento': descuento, 'saldo_actual': saldo_actual}
+            'saldo_ant': saldo_ant, 'descuento': descuento, 'saldo_actual': saldo_actual, 'metodo_pago': metodo_pago}
 
     templateLoader = jinja2.FileSystemLoader('./')
     templateEnv=jinja2.Environment(loader=templateLoader)

@@ -13,6 +13,7 @@ def crearExcel(response):
     sheet['E1'] = 'Mensualidad'
     sheet['F1'] = 'Abono'
     sheet['G1'] = 'Descuento'
+    sheet['H1'] = 'Metodo de Pago'
 
     sheet.column_dimensions['A'].width = 10
     sheet.column_dimensions['B'].width = 30
@@ -21,6 +22,7 @@ def crearExcel(response):
     sheet.column_dimensions['E'].width = 20
     sheet.column_dimensions['F'].width = 20
     sheet.column_dimensions['G'].width = 20
+    sheet.column_dimensions['H'].width = 20
 
     sheet['A1'].font = Font(bold=True)
     sheet['B1'].font = Font(bold=True)
@@ -29,6 +31,7 @@ def crearExcel(response):
     sheet['E1'].font = Font(bold=True)
     sheet['F1'].font = Font(bold=True)
     sheet['G1'].font = Font(bold=True)
+    sheet['H1'].font = Font(bold=True)
 
     sheet['A1'].alignment = Alignment(horizontal='center', vertical='center')
     sheet['B1'].alignment = Alignment(horizontal='center', vertical='center')
@@ -37,6 +40,7 @@ def crearExcel(response):
     sheet['E1'].alignment = Alignment(horizontal='center', vertical='center')
     sheet['F1'].alignment = Alignment(horizontal='center', vertical='center')
     sheet['G1'].alignment = Alignment(horizontal='center', vertical='center')
+    sheet['H1'].alignment = Alignment(horizontal='center', vertical='center')
 
     for i in range(len(response)):
         sheet.cell(row=i+2,column=1).value = response[i]['IdPago']
@@ -46,6 +50,7 @@ def crearExcel(response):
         sheet.cell(row=i+2,column=5).value = response[i]['Mensualidad']
         sheet.cell(row=i+2,column=6).value = response[i]['Abono']
         sheet.cell(row=i+2,column=7).value = response[i]['Descuento']
+        sheet.cell(row=i+2,column=8).value = response[i]['metodoPago']
 
         sheet.cell(row=i+2,column=1).alignment = Alignment(horizontal='center', vertical='center')
         sheet.cell(row=i+2,column=2).alignment = Alignment(horizontal='center', vertical='center')
@@ -54,17 +59,18 @@ def crearExcel(response):
         sheet.cell(row=i+2,column=5).alignment = Alignment(horizontal='center', vertical='center')
         sheet.cell(row=i+2,column=6).alignment = Alignment(horizontal='center', vertical='center')
         sheet.cell(row=i+2,column=7).alignment = Alignment(horizontal='center', vertical='center')
+        sheet.cell(row=i+2,column=8).alignment = Alignment(horizontal='center', vertical='center')
 
     
     fecha = datetime.datetime.now()
-    sheet.cell(row=1,column=9).value = 'Fecha de Reporte'
-    sheet.cell(row=1,column=10).value = fecha.strftime("%d/%m/%Y")
-    sheet.cell(row=1,column=9).font = Font(bold=True)
+    sheet.cell(row=1,column=10).value = 'Fecha de Reporte'
+    sheet.cell(row=1,column=11).value = fecha.strftime("%d/%m/%Y")
     sheet.cell(row=1,column=10).font = Font(bold=True)
-    sheet.cell(row=1,column=9).alignment = Alignment(horizontal='center', vertical='center')
+    sheet.cell(row=1,column=11).font = Font(bold=True)
     sheet.cell(row=1,column=10).alignment = Alignment(horizontal='center', vertical='center')
+    sheet.cell(row=1,column=11).alignment = Alignment(horizontal='center', vertical='center')
+    sheet.column_dimensions['K'].width = 20
     sheet.column_dimensions['J'].width = 20
-    sheet.column_dimensions['I'].width = 20
     
 
     book.save("C:\Recibos de Pago\Reportes Mensuales\Report"+" "+fecha.strftime("%B")+fecha.strftime("%Y")+".xlsx")
