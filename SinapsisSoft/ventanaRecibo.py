@@ -100,10 +100,6 @@ class Product:
         self.mensualidadRecibida = Entry(frame)
         self.mensualidadRecibida.grid(row=4, column=1)
 
-        Label(frame, text='*Abono: ').grid(row=5, column=0)
-        self.abono = Entry(frame)
-        self.abono.grid(row=5, column=1)
-
         Label(frame, text='Descuento: ').grid(row=6, column=0)
         self.descuento = Entry(frame)
         self.descuento.grid(row=6, column=1)
@@ -324,7 +320,6 @@ class Product:
             self.numContratoRecibo.insert(0, numContratoRecibo)
             self.etiquetaNombre.config(text=f'{self.nomClienteRecibo}')
             self.mensualidadRecibida.delete(0,END)
-            self.abono.delete(0,END)
             self.descuento.delete(0,END)
             
             query = 'SELECT * FROM cliente WHERE num_contrato = %s'
@@ -333,14 +328,14 @@ class Product:
             if len(response) == 0:
                 messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
             else:
-                query = 'SELECT mensualidad_recibida, abono, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 if len(response) == 0:
+                    self.mensualidadRecibida.insert(0,1)
                     print("No hay pagos")
                 else:
                     self.mensualidadRecibida.insert(0, response[0]['mensualidad_recibida']+1)
-                    self.abono.insert(0, response[0]['abono'])
                     self.descuento.insert(0, response[0]['descuento'])
                 #print(response)
         except IndexError as e:
@@ -352,7 +347,6 @@ class Product:
         try:
             if len(self.numContratoRecibo.get()) != 0:
                 self.mensualidadRecibida.delete(0,END)
-                self.abono.delete(0,END)
                 self.descuento.delete(0,END)
                 #print(self.numContratoRecibo.get())
                 query = 'SELECT * FROM cliente WHERE num_contrato = %s'
@@ -362,14 +356,14 @@ class Product:
                     messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
                 else:
                     self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
-                    query = 'SELECT mensualidad_recibida, abono, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                    query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
                     parameters = (self.numContratoRecibo.get())
                     response = self.run_query(query,parameters)
                     if len(response) == 0:
+                        self.mensualidadRecibida.insert(0,1)
                         print("No hay pagos")
                     else:
                         self.mensualidadRecibida.insert(0, response[0]['mensualidad_recibida']+1)
-                        self.abono.insert(0, response[0]['abono'])
                         self.descuento.insert(0, response[0]['descuento'])
             else:
                 #print('Error al buscar datos')
@@ -378,7 +372,7 @@ class Product:
             messagebox.showerror("Error", "Error al buscar los datos")
 
     def validationRecibo(self):
-        return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.abono.get()) != 0 and len(self.metodoPago.get()) != 0
+        return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.metodoPago.get()) != 0
 
     def create_reciboSinapsis(self):
         try:
@@ -389,11 +383,11 @@ class Product:
                     descuentoAux="0"
                 else:
                     descuentoAux=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Sinapsis")
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.cantidadRecibida.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Sinapsis")
                 self.run_query_add(query,parameters)
 
                 query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
-                parameters = (self.abono.get(),1,self.numContratoRecibo.get())
+                parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
@@ -406,7 +400,6 @@ class Product:
                 self.numContratoRecibo.delete(0,END)
                 self.cantidadRecibida.delete(0,END)
                 self.mensualidadRecibida.delete(0,END)
-                self.abono.delete(0,END)
                 self.descuento.delete(0,END)
                 self.etiquetaNombre.config(text=f'')
                 self.metodoPago.delete(0,END)
@@ -428,11 +421,11 @@ class Product:
                     descuentoAux="0"
                 else:
                     descuentoAux=self.descuento.get()
-                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.abono.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Speakers")
+                parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.cantidadRecibida.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Speakers")
                 self.run_query_add(query,parameters)
 
                 query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
-                parameters = (self.abono.get(),1,self.numContratoRecibo.get())
+                parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
@@ -445,7 +438,6 @@ class Product:
                 self.numContratoRecibo.delete(0,END)
                 self.cantidadRecibida.delete(0,END)
                 self.mensualidadRecibida.delete(0,END)
-                self.abono.delete(0,END)
                 self.descuento.delete(0,END)
                 self.etiquetaNombre.config(text=f'')
                 self.metodoPago.delete(0,END)
@@ -618,10 +610,6 @@ class Product:
         new_mensualidad_recibida=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=mensualidad_recibida))
         new_mensualidad_recibida.grid(row=3, column=2)
 
-        Label(self.edit_wind_recibo, text='Abono: ').grid(row=4, column=1)
-        new_abono=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=abono))
-        new_abono.grid(row=4, column=2)
-
         Label(self.edit_wind_recibo, text='Descuento: ').grid(row=5, column=1)
         new_descuento=Entry(self.edit_wind_recibo, textvariable=StringVar(self.edit_wind_recibo, value=descuento))
         new_descuento.grid(row=5, column=2)
@@ -635,17 +623,17 @@ class Product:
         new_tipoRecibo.grid(row=7, column=2)
 
         # Boton para guardar cambios
-        Button(self.edit_wind_recibo, text='Guardar Cambios',command= lambda: self.edit_receive(idPago,num_contrato,new_cantidad_recibida.get(),new_mensualidad_recibida.get(),new_abono.get(),new_descuento.get(),new_metodoPago.get(),new_tipoRecibo.get())).grid(row=8, column=2, sticky=W + E)
+        Button(self.edit_wind_recibo, text='Guardar Cambios',command= lambda: self.edit_receive(idPago,num_contrato,new_cantidad_recibida.get(),new_mensualidad_recibida.get(),new_descuento.get(),new_metodoPago.get(),new_tipoRecibo.get())).grid(row=8, column=2, sticky=W + E)
         self.edit_wind_recibo.mainloop()
 
-    def edit_receive(self,idPago,num_contrato,new_cantidad_recibida,new_mensualidad_recibida,new_abono,new_descuento,new_metodoPago,new_tipoRecibo):
+    def edit_receive(self,idPago,num_contrato,new_cantidad_recibida,new_mensualidad_recibida,new_descuento,new_metodoPago,new_tipoRecibo):
         #print(numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens)
         query = 'UPDATE pago SET cantidad_recibida = %s, mensualidad_recibida = %s, abono = %s, descuento = %s, metodoPago = %s, tipoRecibo = %s WHERE idpago = %s'
-        parameters = (new_cantidad_recibida,new_mensualidad_recibida,new_abono,new_descuento,new_metodoPago,new_tipoRecibo,idPago)
+        parameters = (new_cantidad_recibida,new_mensualidad_recibida,new_cantidad_recibida,new_descuento,new_metodoPago,new_tipoRecibo,idPago)
         self.run_query_add(query,parameters)
 
         query = 'UPDATE cliente SET saldo_actual = saldo_anterior - %s WHERE num_contrato = %s'
-        parameters = (new_abono,num_contrato)
+        parameters = (new_cantidad_recibida,num_contrato)
         self.run_query_add(query,parameters)
 
         query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago,pago.tipoRecibo FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'

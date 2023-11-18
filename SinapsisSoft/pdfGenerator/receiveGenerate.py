@@ -30,7 +30,7 @@ def crearPDF(response,tipoRecibo):
 
     config = pdfkit.configuration(wkhtmltopdf='C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
     path = r'C:\Recibos de Pago\\'
-    output_pdf = path+'Recibo de Pago'+str(client_name)+str(id_recibo)+'.pdf'
+    output_pdf = path+'Recibo de Pago '+str(client_name)+" "+str(id_recibo)+'.pdf'
     pdfkit.from_string(outputText, output_pdf, configuration=config, css='SinapsisSoft/pdfGenerator/styles.css')
 
 if __name__ == '__main__':
