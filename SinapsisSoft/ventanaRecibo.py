@@ -64,7 +64,7 @@ class Product:
         self.mensua.grid(row=4, column=1)
 
         ttk.Button(frame, text='Guardar Cliente',command=self.add_clients).grid(row=5, columnspan=2, sticky=W + E)
-        #ttk.Button(frame, text='Generar Recibo de Pago').grid(row=5, column=2, sticky=W + E)
+        ttk.Button(frame, text='Buscar',command=self.search_client_button).grid(row=5, column=2, sticky=W + E)
 
         self.tree = ttk.Treeview(tab, height=10, columns=("","","",""))
         self.tree.grid(row=5, column=0, columnspan=2)
@@ -238,6 +238,31 @@ class Product:
         for row in response:
             #print(row)
             self.tree.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['saldo_anterior'],row['saldo_actual'],row['total_mensualidades']))
+
+    def search_client_button(self):
+        try:
+            if (len(self.numContrato.get()) != 0 or len(self.nomCliente.get()) != 0):
+                self.tree.delete(*self.tree.get_children())
+                query = 'SELECT * FROM cliente WHERE num_contrato = %s or nombre_cliente = %s'
+                parameters = (self.numContrato.get(),self.nomCliente.get())
+                response = self.run_query(query,parameters)
+                if len(response) == 0:
+                    messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
+                else:
+                    for row in response:
+                        #print(row)
+                        self.tree.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['saldo_anterior'],row['saldo_actual'],row['total_mensualidades']))
+            else:
+                query = 'SELECT * FROM cliente'
+                response = self.run_query(query)
+                for row in response:
+                    #print(row)
+                    self.tree.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['saldo_anterior'],row['saldo_actual'],row['total_mensualidades']))
+            self.numContrato.delete(0,END)
+            self.nomCliente.delete(0,END)
+        except pymysql.Error as e:
+            messagebox.showerror("Error", "Error al buscar los datos")
+
             
     def get_clientsRecibo(self):
         records = self.tree2.get_children()
