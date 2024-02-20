@@ -328,7 +328,7 @@ class Product:
             if len(response) == 0:
                 messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
             else:
-                query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY idPago desc limit 1;'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 if len(response) == 0:
@@ -356,7 +356,7 @@ class Product:
                     messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
                 else:
                     self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
-                    query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY fecha DESC LIMIT 1;'
+                    query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY idPago DESC LIMIT 1;'
                     parameters = (self.numContratoRecibo.get())
                     response = self.run_query(query,parameters)
                     if len(response) == 0:
@@ -390,7 +390,7 @@ class Product:
                 parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
-                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idpago desc limit 1'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 print(response)
@@ -428,7 +428,7 @@ class Product:
                 parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
-                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 print(response)
@@ -636,7 +636,7 @@ class Product:
         parameters = (new_cantidad_recibida,num_contrato)
         self.run_query_add(query,parameters)
 
-        query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago,pago.tipoRecibo FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by fecha desc limit 1'
+        query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago,pago.tipoRecibo FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
         parameters = (num_contrato)
         response = self.run_query(query,parameters)
         print(response)
