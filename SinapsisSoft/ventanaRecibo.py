@@ -33,6 +33,11 @@ class Product:
         self.notebook.add(self.tab2, text='Crear Recibo')
         self.create_recibo_tab(self.tab2)
 
+        #Pestaña para generar reporte de concepto libre
+        self.tab5 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab5, text='Crear Recibo Libre')
+        self.create_recibo_libre(self.tab5)
+
         # Pestaña para buscar recibos
         self.tab3 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab3, text='Buscar Recibo')
@@ -119,6 +124,47 @@ class Product:
         self.tree2.heading('#1', text='Numero de Contrato', anchor=CENTER)
         
         ttk.Button(tab, text='Seleccionar', command=self.select_register).grid(row=6, column=0, sticky=W + E)
+
+        self.get_clientsRecibo()
+
+    def create_recibo_libre(self, tab):
+        frame = LabelFrame(tab, text='Nuevo Recibo')
+        frame.grid(row=0, column=0, columnspan=3, pady=20)
+
+        Label(frame, text='Nombre: ').grid(row=1, column=0)
+        self.etiquetaNombreLibre= Label(frame)
+        self.etiquetaNombreLibre.grid(row=1, column=1)
+
+        Label(frame, text='*Numero de Contrato: ').grid(row=2, column=0)
+        self.numContratoReciboLibre = Entry(frame)
+        self.numContratoReciboLibre.grid(row=2, column=1)
+
+        ttk.Button(frame, text='Buscar',command=self.search_client_libre).grid(row=2,column=3, columnspan=2, sticky=W + E)
+
+        Label(frame, text='*Cantidad Recibida: ').grid(row=3, column=0)
+        self.cantidadRecibidaLibre = Entry(frame)
+        self.cantidadRecibidaLibre.grid(row=3, column=1)
+
+        Label(frame, text='Descuento: ').grid(row=6, column=0)
+        self.descuentoLibre = Entry(frame)
+        self.descuentoLibre.grid(row=6, column=1)
+
+        Label(frame, text='Metodo de Pago ').grid(row=7, column=0)
+        self.metodoPagoLibre = ttk.Combobox(frame, values=["Efectivo","TPV","Transferencia"])
+        self.metodoPagoLibre.grid(row=7, column=1)
+
+        Label(frame, text='Concepto de Pago ').grid(row=8, column=0)
+        self.conceptoPagoLibre = ttk.Combobox(frame, values=["Libro"])
+        self.conceptoPagoLibre.grid(row=8, column=1)
+
+        Label(frame, text='Tipo De Recibo').grid(row=9, column=0)
+        self.tipoReciboLibre = ttk.Combobox(frame, values=["Sinapsis","Speakers"])
+        self.tipoReciboLibre.grid(row=9, column=1)
+
+        Label(frame,text='* Campos obligatorios', fg='red').grid(row=10, column=0)
+        #ttk.Button(frame, text='Crear Recibo Sinapsis',command=self.create_reciboSinapsis).grid(row=10, column=0, sticky=W + E)
+        #ttk.Button(frame, text='Crear Recibo Speakers',command=self.create_reciboSpeakers).grid(row=10, column=1, sticky=W + E)
+        ttk.Button(frame, text='Generar Recibo de Pago',command=self.create_reciboLibre).grid(row=11, column=0, sticky=W + E)
 
         self.get_clientsRecibo()
 
@@ -371,8 +417,29 @@ class Product:
         except pymysql.Error as e:
             messagebox.showerror("Error", "Error al buscar los datos")
 
+    def search_client_libre(self):
+        try:
+            if len(self.numContratoReciboLibre.get()) != 0:
+                self.descuentoLibre.delete(0,END)
+                #print(self.numContratoRecibo.get())
+                query = 'SELECT * FROM cliente WHERE num_contrato = %s'
+                parameters = (self.numContratoReciboLibre.get())
+                response = self.run_query(query,parameters)
+                if len(response) == 0:
+                    messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
+                else:
+                    self.etiquetaNombreLibre.config(text=f'{response[0]["nombre_cliente"]}')
+            else:
+                #print('Error al buscar datos')
+                messagebox.showinfo("Fracaso", "No se ingreso un numero de contrato")
+        except pymysql.Error as e:
+            messagebox.showerror("Error", "Error al buscar los datos")
+
     def validationRecibo(self):
         return len(self.numContratoRecibo.get()) != 0 and len(self.cantidadRecibida.get()) != 0 and len(self.mensualidadRecibida.get()) != 0 and len(self.metodoPago.get()) != 0
+    
+    def validationReciboLibre(self):
+        return len(self.numContratoReciboLibre.get()) != 0 and len(self.cantidadRecibidaLibre.get()) != 0 and len(self.metodoPagoLibre.get()) != 0 and len(self.tipoReciboLibre.get()) != 0 and len(self.conceptoPagoLibre.get()) != 0
 
     def create_reciboSinapsis(self):
         try:
@@ -441,6 +508,42 @@ class Product:
                 self.descuento.delete(0,END)
                 self.etiquetaNombre.config(text=f'')
                 self.metodoPago.delete(0,END)
+                self.get_clients()
+                self.get_history_pays()
+            else:
+                #print('Error al guardar datos')
+                messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
+        except pymysql.Error as e:
+            print("Error al guardar los datos: ", e)
+            messagebox.showerror("Error", "Error al guardar los datos")
+
+    def create_reciboLibre(self):
+        try:
+            if self.validationReciboLibre():
+                query = 'INSERT INTO pago (FK_ContratoCliente, cantidad_recibida, descuento,fecha,metodoPago,tipoRecibo,concepto) values(%s, %s, %s,%s,%s,%s,%s)'
+                descuentoAux = self.descuentoLibre.get()
+                if len(descuentoAux) == 0:
+                    descuentoAux="0"
+                else:
+                    descuentoAux=self.descuentoLibre.get()
+                parameters = (self.numContratoReciboLibre.get(),self.cantidadRecibidaLibre.get(),descuentoAux,datetime.datetime.now(),self.metodoPagoLibre.get(),self.tipoReciboLibre.get()+" Conceptos varios",self.conceptoPagoLibre.get())
+                self.run_query_add(query,parameters)
+                
+                query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.cantidad_recibida,pago.descuento,pago.fecha,pago.metodoPago,pago.concepto FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1;'
+                #query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
+                parameters = (self.numContratoReciboLibre.get())
+                response = self.run_query(query,parameters)
+                print(response)
+                ##print('Datos guardados')
+                receiveGenerate.CrearPDFLibre(response,self.tipoReciboLibre.get())
+                messagebox.showinfo("Éxito", "Datos guardados correctamente")
+                self.numContratoReciboLibre.delete(0,END)
+                self.cantidadRecibidaLibre.delete(0,END)
+                self.descuentoLibre.delete(0,END)
+                self.etiquetaNombreLibre.config(text=f'')
+                self.metodoPagoLibre.delete(0,END)
+                self.tipoReciboLibre.delete(0,END)
+                self.conceptoPagoLibre.delete(0,END)
                 self.get_clients()
                 self.get_history_pays()
             else:

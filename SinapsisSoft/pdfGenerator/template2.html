@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Otros meta y enlaces a estilos aquí -->
+</head>
+<body>
+<div class="page-container">Page of</div>
+<div class="logo-container"><img style="height: 150px;" src={{imgRecibo}} /></div>
+<table class="invoice-info-container">
+<tbody>
+<tr>
+<td class="client-name" rowspan="2">{{client_name}}</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Numero de Contrato: <strong>{{num_contrato}}</strong></td>
+<td>Fecha: <strong>{{today_date}}</strong></td>
+</tr>
+<tr>
+<td>Folio: <strong>{{id_recibo}}</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<br>
+<!-- <table class="invoice-info-container">
+    <tbody>
+    <tr>
+    <td class="client-name" rowspan="2">{client_name}}</td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    </tr>
+    <tr>
+    <td>Numero de Contrato: <strong>{num_contrato}}</strong></td>
+    <td>Fecha: <strong>{today_date}}</strong></td>
+    </tr>
+    <tr>
+    <td>Folio: <strong>{id_recibo}}</strong></td>
+    <td></td>
+    </tr>
+    </tbody>
+    </table> -->
+
+
+<table class="line-items-container has-bottom-border">
+<thead>
+<tr>
+<th>Info de pago</th>
+<th>Concepto</th>
+<th>Abono</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="payment-info">
+<div>Pago</div>
+</td>
+<td class="large">{{concepto}}</td>
+<td class="large total">{{cantidad_recibida}}</td>
+</tr>
+</tbody>
+</table>
+
+<table class="line-items-container has-bottom-border">
+    <thead>
+    <tr>
+    <th>Info de contrato</th>
+    <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class="payment-info">
+        <div>Concepto</div>
+        </td>
+        <td class="large">{{concepto}}</td>
+        </tr>
+        <tr>
+                <td class="payment-info">
+                <div>Cantidad Recibida</div>
+                </td>
+                <td class="large">${{cantidad_recibida}}</td>
+                </tr>
+                <tr>
+                    <td class="payment-info">
+                    <div>Metodo de Pago</div>
+                    </td>
+                    <td class="large">{{metodo_pago}}</td>
+                    </tr>
+    </tbody>
+    </table>
+    <div class="footer">
+    <div class="footer-info">Sierra Picachos #101B, Bosques del Prado Sur</div>
+    <div class="footer-thanks"><img src="https://github.com/anvilco/html-pdf-invoice-template/raw/main/img/heart.png" alt="heart" />Thank you!</div>
+</div>
+</body>
+</html>

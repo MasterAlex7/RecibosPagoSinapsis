@@ -33,5 +33,35 @@ def crearPDF(response,tipoRecibo):
     output_pdf = path+'Recibo de Pago '+str(client_name)+" "+str(id_recibo)+'.pdf'
     pdfkit.from_string(outputText, output_pdf, configuration=config, css='SinapsisSoft/pdfGenerator/styles.css')
 
+def CrearPDFLibre(response,tipoRecibo):
+    client_name = response[0]['nombre_cliente']
+    num_contrato = response[0]['num_contrato']
+    today_date = response[0]['fecha']
+    id_recibo = response[0]['idPago']
+    descuento = response[0]['descuento']
+    metodo_pago = response[0]['metodoPago']
+    cantidad_recibida = response[0]['cantidad_recibida']
+    concepto = response[0]['concepto']
+
+    if tipoRecibo == 'Sinapsis':
+        img = "https://raw.githubusercontent.com/MasterAlex7/assetsProyects/main/assetsSinapsis/LogoSinapsis.jpeg"
+    else:
+        img = "https://raw.githubusercontent.com/MasterAlex7/assetsProyects/main/assetsSinapsis/LogoSpeakers.jpeg"
+
+    context = {'imgRecibo': img,'client_name': client_name, 'num_contrato': num_contrato, 'today_date': today_date,
+            'id_recibo': id_recibo, 'descuento': descuento, 'metodo_pago': metodo_pago, 'cantidad_recibida': cantidad_recibida, 'concepto': concepto}
+
+    templateLoader = jinja2.FileSystemLoader('./')
+    templateEnv=jinja2.Environment(loader=templateLoader)
+
+    html_template= 'SinapsisSoft/pdfGenerator/template2.html'
+    template = templateEnv.get_template(html_template)
+    outputText=template.render(context)
+
+    config = pdfkit.configuration(wkhtmltopdf='C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
+    path = r'C:\Recibos de Pago\\'
+    output_pdf = path+'Recibo de Pago '+str(client_name)+" "+str(id_recibo)+'.pdf'
+    pdfkit.from_string(outputText, output_pdf, configuration=config, css='SinapsisSoft/pdfGenerator/styles.css')
+
 if __name__ == '__main__':
     crearPDF()
