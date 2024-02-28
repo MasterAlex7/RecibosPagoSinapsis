@@ -71,13 +71,14 @@ class Product:
         ttk.Button(frame, text='Guardar Cliente',command=self.add_clients).grid(row=5, columnspan=2, sticky=W + E)
         ttk.Button(frame, text='Buscar',command=self.search_client_button).grid(row=5, column=2, sticky=W + E)
 
-        self.tree = ttk.Treeview(tab, height=10, columns=("","","",""))
+        self.tree = ttk.Treeview(tab, height=10, columns=("","","","",""))
         self.tree.grid(row=5, column=0, columnspan=2)
         self.tree.heading('#0', text='Numero de Contrato', anchor=CENTER)
         self.tree.heading('#1', text='Nombre', anchor=CENTER)
         self.tree.heading('#2', text='Saldo Anterior', anchor=CENTER)
         self.tree.heading('#3', text='Saldo Actual', anchor=CENTER)
         self.tree.heading('#4', text='Mensualidades', anchor=CENTER)
+        self.tree.heading('#5', text='Fecha de Pago', anchor=CENTER)
 
         ttk.Button(tab, text='Editar',command=self.edit_client_window).grid(row=6, column=0, sticky=W + E)
         
@@ -280,7 +281,7 @@ class Product:
         response = self.run_query(query)
         for row in response:
             #print(row)
-            self.tree.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['saldo_anterior'],row['saldo_actual'],row['total_mensualidades']))
+            self.tree.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['saldo_anterior'],row['saldo_actual'],row['total_mensualidades'],row['fechaPago']))
 
     def search_client_button(self):
         try:
@@ -325,8 +326,12 @@ class Product:
     def add_clients(self):
         try:
             if self.validation():
-                query = 'INSERT INTO cliente (num_contrato, nombre_cliente, saldo_anterior, saldo_actual, total_mensualidades,mens_pagadas) values(%s,%s, %s, %s, %s,0)'
-                parameters = (self.numContrato.get(),self.nomCliente.get(),self.saldo.get(),self.saldo.get(),self.mensua.get())
+                query = 'INSERT INTO cliente (num_contrato, nombre_cliente, saldo_anterior, saldo_actual, total_mensualidades,mens_pagadas,fechaPago) values(%s,%s, %s, %s, %s,0,%s)'
+                parameters = (self.numContrato.get(),self.nomCliente.get(),self.saldo.get(),self.saldo.get(),self.mensua.get(),datetime.datetime.now()+datetime.timedelta(days=7))
+                self.run_query_add(query,parameters)
+
+                query = 'INSERT INTO statusclientes (FK_ContratoCliente, status) values(%s,%s)'
+                parameters = (self.numContrato.get(),"Pendiente")
                 self.run_query_add(query,parameters)
                 #print('Datos guardados')
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
@@ -651,6 +656,7 @@ class Product:
         saldoAnterior = self.tree.item(self.tree.selection())['values'][1]
         saldoActual = self.tree.item(self.tree.selection())['values'][2]
         mensualidades = self.tree.item(self.tree.selection())['values'][3]
+        fechaPago = self.tree.item(self.tree.selection())['values'][4]
         self.edit_wind = Toplevel()
         self.edit_wind.title = 'Editar Cliente'
 
@@ -673,15 +679,19 @@ class Product:
         new_mens=Entry(self.edit_wind, textvariable=StringVar(self.edit_wind, value=mensualidades))
         new_mens.grid(row=4, column=2)
 
+        Label(self.edit_wind, text='Fecha Pago:(año-mes-dia)').grid(row=5, column=1)
+        new_date=Entry(self.edit_wind, textvariable=StringVar(self.edit_wind, value=fechaPago))
+        new_date.grid(row=5, column=2)
+
 
         # Boton para guardar cambios
-        Button(self.edit_wind, text='Guardar Cambios',command= lambda: self.edit_client(numContrato,new_nombre.get(),new_saldoAnt.get(),new_saldoAct.get(),new_mens.get())).grid(row=5, column=2, sticky=W + E)
+        Button(self.edit_wind, text='Guardar Cambios',command= lambda: self.edit_client(numContrato,new_nombre.get(),new_saldoAnt.get(),new_saldoAct.get(),new_mens.get(),new_date.get())).grid(row=6, column=2, sticky=W + E)
         self.edit_wind.mainloop()
         
-    def edit_client(self,numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens):
+    def edit_client(self,numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens,new_date):
         #print(numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens)
-        query = 'UPDATE cliente SET nombre_cliente = %s, saldo_anterior = %s, saldo_actual = %s, total_mensualidades = %s WHERE num_contrato = %s'
-        parameters = (new_nombre,new_saldoAnt,new_saldoAct,new_mens,numContrato)
+        query = 'UPDATE cliente SET nombre_cliente = %s, saldo_anterior = %s, saldo_actual = %s, total_mensualidades = %s, fechaPago = %s WHERE num_contrato = %s'
+        parameters = (new_nombre,new_saldoAnt,new_saldoAct,new_mens,new_date,numContrato)
         self.run_query_add(query,parameters)
         messagebox.showinfo("Éxito", "Datos guardados correctamente")
         self.get_clients()
