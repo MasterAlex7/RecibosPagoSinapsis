@@ -220,7 +220,7 @@ class Product:
         self.etiquetaDescuentoRec.grid(row=6, column=1)
 
     def history_pays_tab(self,tab):
-        self.tree3 = ttk.Treeview(tab, height=10, columns=("","","","","","","",""))
+        self.tree3 = ttk.Treeview(tab, height=10, columns=("","","","","","",""))
         self.tree3.grid(row=5, column=0, columnspan=2)
         self.tree3.heading('#0', text='ID Pago', anchor=CENTER)
         self.tree3.heading('#1', text='Numero Contrato', anchor=CENTER)
@@ -264,6 +264,7 @@ class Product:
         for element in records2:
             self.tree3.delete(element)
         
+        #query= "select pago.idpago, cliente.nombre_cliente as FK_ContratoCliente, pago.cantidad_recibida, concat(pago.mensualidad_recibida,'-',cliente.total_mensualidades) as mensualidad_recibida, pago.abono, pago.descuento, pago.metodoPago, pago.tipoRecibo from pago inner join cliente where cliente.num_contrato = pago.FK_ContratoCliente"
         query= "select * from pago"
         response = self.run_query(query)
         for row in response:
@@ -460,7 +461,7 @@ class Product:
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idpago desc limit 1'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
-                print(response)
+                #print(response)
                 #print('Datos guardados')
                 receiveGenerate.crearPDF(response,tipoRecibo="Sinapsis")
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
@@ -498,7 +499,7 @@ class Product:
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
-                print(response)
+                #print(response)
                 #print('Datos guardados')
                 receiveGenerate.crearPDF(response,tipoRecibo="Speakers")
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
@@ -533,7 +534,7 @@ class Product:
                 #query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
                 parameters = (self.numContratoReciboLibre.get())
                 response = self.run_query(query,parameters)
-                print(response)
+                #print(response)
                 ##print('Datos guardados')
                 receiveGenerate.CrearPDFLibre(response,self.tipoReciboLibre.get())
                 messagebox.showinfo("Éxito", "Datos guardados correctamente")
@@ -636,7 +637,7 @@ class Product:
                 response = self.run_query(query,params)
                 reportGenerate.crearExcel(response)
                 messagebox.showinfo("Éxito", "Reporte generado correctamente")
-                print(response)
+                #print(response)
             else:
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
         except pymysql.Error as e:
@@ -644,7 +645,7 @@ class Product:
             messagebox.showerror("Error", "Error al generar reporte")
 
     def edit_client_window(self):
-        print(self.tree.item(self.tree.selection()))
+        #print(self.tree.item(self.tree.selection()))
         numContrato = self.tree.item(self.tree.selection())['text']
         nombre = self.tree.item(self.tree.selection())['values'][0]
         saldoAnterior = self.tree.item(self.tree.selection())['values'][1]
@@ -687,7 +688,7 @@ class Product:
         self.edit_wind.destroy()
 
     def edit_receive_window(self):
-        print(self.tree3.item(self.tree3.selection()))
+        #print(self.tree3.item(self.tree3.selection()))
         idPago = self.tree3.item(self.tree3.selection())['text']
         num_contrato = self.tree3.item(self.tree3.selection())['values'][0]
         cantidad_recibida = self.tree3.item(self.tree3.selection())['values'][1]
@@ -742,7 +743,7 @@ class Product:
         query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago,pago.tipoRecibo FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
         parameters = (num_contrato)
         response = self.run_query(query,parameters)
-        print(response)
+        #print(response)
         receiveGenerate.crearPDF(response,response[0]['tipoRecibo'])
         messagebox.showinfo("Éxito", "Datos guardados correctamente")
         self.get_history_pays()
