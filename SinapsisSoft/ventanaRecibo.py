@@ -48,6 +48,11 @@ class Product:
         self.notebook.add(self.tab4, text='Historial de Pagos')
         self.history_pays_tab(self.tab4)
 
+        # Pestaña para proximos de pagos
+        self.tab5 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab5, text='Proximos a Pagar')
+        self.prox_pays_tab(self.tab5)
+
     def create_register_tab(self, tab):
         frame = LabelFrame(tab, text='Registrar nuevo cliente')
         frame.grid(row=0, column=0, columnspan=3, pady=20)
@@ -236,6 +241,16 @@ class Product:
 
         self.get_history_pays()
 
+    def prox_pays_tab(self,tab):
+        self.tree4 = ttk.Treeview(tab, height=10, columns=("","",""))
+        self.tree4.grid(row=5, column=0, columnspan=2)
+        self.tree4.heading('#0', text='Num. Contrato', anchor=CENTER)
+        self.tree4.heading('#1', text='Nombre', anchor=CENTER)
+        self.tree4.heading('#2', text='Fecha de Pago', anchor=CENTER)
+        self.tree4.heading('#3', text='Status', anchor=CENTER)
+
+        self.get_prox_pays()
+
     def run_query(self,query,parameters = ()):
         print("Entro a run query")
         MysqlCnx = pymysql.connect(host=self.dbHost,port=self.dbPort,
@@ -271,6 +286,16 @@ class Product:
         for row in response:
             self.tree3.insert('',0,text = row['idpago'], values = (row['FK_ContratoCliente'],row['cantidad_recibida'],row['mensualidad_recibida'],row['abono'],row['descuento'],row['metodoPago'],row['tipoRecibo']))
     
+    def get_prox_pays(self):
+        records3 = self.tree4.get_children()
+        for element in records3:
+            self.tree4.delete(element)
+        
+        query= "select C.num_contrato, C.nombre_cliente, C.fechaPago, S.status from cliente C left join statusclientes S on S.FK_ContratoCliente = C.num_contrato where S.status = 'Pendiente' order by C.fechaPago desc"
+        response = self.run_query(query)
+        for row in response:
+            self.tree4.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['fechaPago'],row['status']))
+
     def get_clients(self):
         records = self.tree.get_children()
         for element in records:
@@ -459,13 +484,31 @@ class Product:
                 parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.cantidadRecibida.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Sinapsis")
                 self.run_query_add(query,parameters)
 
-                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
-                parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
+                query = 'SELECT fechaPago FROM cliente WHERE num_contrato = %s'
+                parameters = (self.numContratoRecibo.get())
+                fechaPago = self.run_query(query,parameters)
+
+                if fechaPago[0]['fechaPago'] is None:
+                    fechaPago = datetime.datetime.now() + datetime.timedelta(days=30) #no tiene fecha de pago
+                else:
+                    if fechaPago[0]['fechaPago'] == datetime.date.today()+datetime.timedelta(days=30):
+                        fechaPago = fechaPago[0]['fechaPago'] #Varios pagos el mismo dia
+                    else:
+                        fechaPago = fechaPago[0]['fechaPago']+datetime.timedelta(days=30) #Primer pago
+                #print(fechaPago)
+
+                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s, fechaPago = %s WHERE num_contrato = %s'
+                parameters = (self.cantidadRecibida.get(),1,fechaPago,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idpago desc limit 1'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
+                
+                query = 'UPDATE statusclientes SET status = "Pagado", fecha_cobro = %s WHERE FK_ContratoCliente = %s'
+                parameters = (datetime.datetime.now(),self.numContratoRecibo.get())
+                self.run_query_add(query,parameters)
+
                 #print(response)
                 #print('Datos guardados')
                 receiveGenerate.crearPDF(response,tipoRecibo="Sinapsis")
@@ -689,10 +732,19 @@ class Product:
         self.edit_wind.mainloop()
         
     def edit_client(self,numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens,new_date):
+        print(new_date)
+        if new_date == 'None':
+            print("Entro a if")
+            new_date = datetime.datetime.now()
+            query = 'INSERT INTO statusclientes (FK_ContratoCliente, status) values(%s,%s)'
+            parameters = (numContrato,"Pendiente")
+            self.run_query_add(query,parameters)
+
         #print(numContrato,new_nombre,new_saldoAnt,new_saldoAct,new_mens)
         query = 'UPDATE cliente SET nombre_cliente = %s, saldo_anterior = %s, saldo_actual = %s, total_mensualidades = %s, fechaPago = %s WHERE num_contrato = %s'
         parameters = (new_nombre,new_saldoAnt,new_saldoAct,new_mens,new_date,numContrato)
         self.run_query_add(query,parameters)
+
         messagebox.showinfo("Éxito", "Datos guardados correctamente")
         self.get_clients()
         self.edit_wind.destroy()
