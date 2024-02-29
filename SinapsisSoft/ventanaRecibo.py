@@ -53,6 +53,8 @@ class Product:
         self.notebook.add(self.tab5, text='Proximos a Pagar')
         self.prox_pays_tab(self.tab5)
 
+        self.refreshStatus()
+
     def create_register_tab(self, tab):
         frame = LabelFrame(tab, text='Registrar nuevo cliente')
         frame.grid(row=0, column=0, columnspan=3, pady=20)
@@ -810,6 +812,31 @@ class Product:
         messagebox.showinfo("Éxito", "Datos guardados correctamente")
         self.get_history_pays()
         self.edit_wind_recibo.destroy()
+
+    def refreshStatus(self):
+        query = 'SELECT * FROM statusclientes'
+        response1 = self.run_query(query)
+
+        query = 'SELECT fechaPago FROM cliente'
+        response2 = self.run_query(query)
+
+        for row,row2 in zip(response1,response2):
+            if row2['fechaPago']:
+                if row['status'] == 'Pendiente':
+                    if row2['fechaPago'] == datetime.date.today():
+                        query = 'UPDATE statusclientes SET status = "Pendiente" WHERE FK_ContratoCliente = %s'
+                        parameters = (row['FK_ContratoCliente'])
+                        self.run_query_add(query,parameters)
+                    elif row2['fechaPago'] < datetime.date.today():
+                        query = 'UPDATE statusclientes SET status = "Atrasado" WHERE FK_ContratoCliente = %s'
+                        parameters = (row['FK_ContratoCliente'])
+                        self.run_query_add(query,parameters)
+                elif row['status'] == 'Pagado':
+                    if row2['fechaPago'] == datetime.date.today():
+                        query = 'UPDATE statusclientes SET status = "Pendiente" WHERE FK_ContratoCliente = %s'
+                        parameters = (row['FK_ContratoCliente'])
+                        self.run_query_add(query,parameters)
+
 
 
 if __name__ == '__main__':
