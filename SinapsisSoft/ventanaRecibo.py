@@ -293,7 +293,7 @@ class Product:
         for element in records3:
             self.tree4.delete(element)
         
-        query= "select C.num_contrato, C.nombre_cliente, C.fechaPago, S.status from cliente C left join statusclientes S on S.FK_ContratoCliente = C.num_contrato where S.status = 'Pendiente' order by C.fechaPago desc"
+        query= "select C.num_contrato, C.nombre_cliente, C.fechaPago, S.status from cliente C left join statusclientes S on S.FK_ContratoCliente = C.num_contrato where S.status = 'Pendiente' or S.status = 'Atrasado' order by C.fechaPago desc"
         response = self.run_query(query)
         for row in response:
             self.tree4.insert('',0,text = row['num_contrato'], values = (row['nombre_cliente'],row['fechaPago'],row['status']))
@@ -493,11 +493,7 @@ class Product:
                 if fechaPago[0]['fechaPago'] is None:
                     fechaPago = datetime.datetime.now() + datetime.timedelta(days=30) #no tiene fecha de pago
                 else:
-                    if fechaPago[0]['fechaPago'] == datetime.date.today()+datetime.timedelta(days=30):
-                        fechaPago = fechaPago[0]['fechaPago'] #Varios pagos el mismo dia
-                    else:
-                        fechaPago = fechaPago[0]['fechaPago']+datetime.timedelta(days=30) #Primer pago
-                #print(fechaPago)
+                    fechaPago = fechaPago[0]['fechaPago']+datetime.timedelta(days=30) #Primer pago
 
                 query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s, fechaPago = %s WHERE num_contrato = %s'
                 parameters = (self.cantidadRecibida.get(),1,fechaPago,self.numContratoRecibo.get())
@@ -523,6 +519,7 @@ class Product:
                 self.metodoPago.delete(0,END)
                 self.get_clients()
                 self.get_history_pays()
+                self.get_prox_pays()
             else:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
@@ -541,9 +538,18 @@ class Product:
                     descuentoAux=self.descuento.get()
                 parameters = (self.numContratoRecibo.get(),self.cantidadRecibida.get(),self.mensualidadRecibida.get(),self.cantidadRecibida.get(),descuentoAux,datetime.datetime.now(),self.metodoPago.get(),"Speakers")
                 self.run_query_add(query,parameters)
+                
+                query = 'SELECT fechaPago FROM cliente WHERE num_contrato = %s'
+                parameters = (self.numContratoRecibo.get())
+                fechaPago = self.run_query(query,parameters)
 
-                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s WHERE num_contrato = %s'
-                parameters = (self.cantidadRecibida.get(),1,self.numContratoRecibo.get())
+                if fechaPago[0]['fechaPago'] is None:
+                    fechaPago = datetime.datetime.now() + datetime.timedelta(days=30) #no tiene fecha de pago
+                else:
+                    fechaPago = fechaPago[0]['fechaPago']+datetime.timedelta(days=30) #Primer pago
+
+                query = 'UPDATE cliente SET saldo_anterior = saldo_actual, saldo_actual = saldo_actual - %s, mens_pagadas = mens_pagadas + %s, fechaPago = %s WHERE num_contrato = %s'
+                parameters = (self.cantidadRecibida.get(),1,fechaPago,self.numContratoRecibo.get())
                 self.run_query_add(query,parameters)
 
                 query = 'select cliente.nombre_cliente, cliente.num_contrato,pago.idPago,pago.mensualidad_recibida,pago.abono,cliente.saldo_anterior,cliente.saldo_actual,pago.descuento,pago.fecha,pago.metodoPago FROM cliente INNER JOIN pago ON cliente.num_contrato = pago.FK_ContratoCliente WHERE cliente.num_contrato = %s order by idPago desc limit 1'
@@ -561,6 +567,7 @@ class Product:
                 self.metodoPago.delete(0,END)
                 self.get_clients()
                 self.get_history_pays()
+                self.get_prox_pays()
             else:
                 #print('Error al guardar datos')
                 messagebox.showinfo("Fracaso", "Por favor llene todos los campos obligatorios")
@@ -814,30 +821,34 @@ class Product:
         self.edit_wind_recibo.destroy()
 
     def refreshStatus(self):
-        query = 'SELECT * FROM statusclientes'
-        response1 = self.run_query(query)
+        # Obtener datos de statusclientes
+        diasPrevios = 7
+        query_status = 'SELECT * FROM statusclientes'
+        datosStatus = self.run_query(query_status)
 
-        query = 'SELECT fechaPago FROM cliente'
-        response2 = self.run_query(query)
+        # Iterar sobre los datos
+        for stat in datosStatus:
+            query_clientes = 'SELECT fechaPago FROM cliente WHERE num_contrato = %s'
+            datosClientes = self.run_query(query_clientes, (stat['FK_ContratoCliente'],))
+            fechaPago = datosClientes[0]['fechaPago']
+            print((fechaPago - datetime.date.today()).days)
 
-        for row,row2 in zip(response1,response2):
-            if row2['fechaPago']:
-                if row['status'] == 'Pendiente':
-                    if row2['fechaPago'] == datetime.date.today():
-                        query = 'UPDATE statusclientes SET status = "Pendiente" WHERE FK_ContratoCliente = %s'
-                        parameters = (row['FK_ContratoCliente'])
-                        self.run_query_add(query,parameters)
-                    elif row2['fechaPago'] < datetime.date.today():
-                        query = 'UPDATE statusclientes SET status = "Atrasado" WHERE FK_ContratoCliente = %s'
-                        parameters = (row['FK_ContratoCliente'])
-                        self.run_query_add(query,parameters)
-                elif row['status'] == 'Pagado':
-                    if row2['fechaPago'] == datetime.date.today():
-                        query = 'UPDATE statusclientes SET status = "Pendiente" WHERE FK_ContratoCliente = %s'
-                        parameters = (row['FK_ContratoCliente'])
-                        self.run_query_add(query,parameters)
+            if stat['status'] == 'Pendiente':
+                if fechaPago == datetime.date.today():
+                    self.actualizar_estado_cliente(stat['FK_ContratoCliente'], 'Pendiente')
+                elif fechaPago < datetime.date.today():
+                    self.actualizar_estado_cliente(stat['FK_ContratoCliente'], 'Atrasado')
+            elif stat['status'] == 'Pagado':
+                dias_restantes = (fechaPago - datetime.date.today()).days
+                if dias_restantes <= diasPrevios:
+                    self.actualizar_estado_cliente(stat['FK_ContratoCliente'], 'Pendiente')
 
-
+    def actualizar_estado_cliente(self, num_contrato, nuevo_estado):
+        # Actualizar el estado del cliente en la base de datos
+        query = 'UPDATE statusclientes SET status = %s WHERE FK_ContratoCliente = %s'
+        parameters = (nuevo_estado, num_contrato)
+        self.run_query_add(query, parameters)
+        self.get_prox_pays()
 
 if __name__ == '__main__':
     window = Tk()
