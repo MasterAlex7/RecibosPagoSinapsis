@@ -407,7 +407,7 @@ class Product:
             if len(response) == 0:
                 messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
             else:
-                query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY idPago desc limit 1;'
+                query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s and concepto is null ORDER BY idPago DESC LIMIT 1;'
                 parameters = (self.numContratoRecibo.get())
                 response = self.run_query(query,parameters)
                 if len(response) == 0:
@@ -435,7 +435,7 @@ class Product:
                     messagebox.showinfo("Fracaso", "No se encontro el numero de contrato")
                 else:
                     self.etiquetaNombre.config(text=f'{response[0]["nombre_cliente"]}')
-                    query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s ORDER BY idPago DESC LIMIT 1;'
+                    query = 'SELECT mensualidad_recibida, descuento FROM pago WHERE FK_ContratoCliente = %s and concepto is null ORDER BY idPago DESC LIMIT 1;'
                     parameters = (self.numContratoRecibo.get())
                     response = self.run_query(query,parameters)
                     if len(response) == 0:
