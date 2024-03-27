@@ -1,0 +1,23 @@
+<mat-toolbar class="d-flex justify-content-between toolBarCont">
+    <button mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>menu</mat-icon>
+    </button>
+    <!-- <span class="title">SINAPSIS SOFT</span> -->
+    <img src="assets/logoSinapsis.png" alt="" class="img-fluid" alt="Responsive image" width="128" height="128">
+    <a href="/home" mat-icon-button class="example-icon favorite-icon" >
+        <mat-icon>home</mat-icon>
+    </a>
+</mat-toolbar>
+
+<mat-drawer-container class="matDrawerCont" [hasBackdrop]="true">
+    <mat-drawer #drawer mode='over'>
+        <mat-nav-list>
+            <a mat-list-item routerLink="/home" (click)="drawer.toggle()">Home</a>
+            <a mat-list-item routerLink="/about" (click)="drawer.toggle()">About</a>
+            <a mat-list-item routerLink="/contact" (click)="drawer.toggle()">Contact</a>
+        </mat-nav-list>
+    </mat-drawer>
+    <mat-drawer-content class="matDrawerContent">
+        <router-outlet></router-outlet>
+    </mat-drawer-content>
+</mat-drawer-container>

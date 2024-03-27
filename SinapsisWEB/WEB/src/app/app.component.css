@@ -1,0 +1,14 @@
+.matDrawerContent{
+    max-height: fit-content;
+    overflow-y: auto;
+}
+
+.matDrawerCont{
+    height: 93%;
+    background-color: #f4f4f4;
+}
+
+.toolBarCont{
+    /* background-color: #6fbf4c; */
+    background-color: #ebeaea;
+}
